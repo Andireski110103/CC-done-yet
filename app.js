@@ -3,6 +3,10 @@ const bodyParser = require("body-parser");
 
 const app = express();
 
+app.get('/', (req, res) => {
+  res.send("API Aktif, hehe");
+})
+
 // Routes
 const authRoutes = require("./routes/auth");
 
@@ -13,9 +17,11 @@ app.use(bodyParser.json());
 app.use("/api", authRoutes);
 
 // PORT
-const port = 5000;
 
 // Starting a server
-app.listen(port, () => {
-  console.log(`app is running at ${port}`);
+const server = app.listen(process.env.PORT || 8080, () => {
+  const host =server.address().address;
+  const port = server.address.port;
+
+  console.log ("Runing on port 8080");
 });
