@@ -1,20 +1,59 @@
 const firebase = require("./../config/firebase");
 
-// signup
-exports.signup = (req, res) => {
-  if (!req.body.email || !req.body.password) {
+exports.register = (req, res) => {
+  if (!req.body.email || !req.body.password || !req.body.name) {
     return res.status(422).json({
+      name: "name is required",
       email: "email is required",
       password: "password is required",
     });
   }
+
+
+  const isGoogleEmail = req.body.email.endsWith("@gmail.com") || req.body.email.endsWith("@googlemail.com");
+  if (!isGoogleEmail) {
+    return res.status(422).json({
+      email: "Only Google emails are allowed",
+    });
+  }
+
+  // Create user in Firebase Authentication
   firebase
     .auth()
     .createUserWithEmailAndPassword(req.body.email, req.body.password)
-    .then((data) => {
-      return res.status(201).json(data);
+    .then((userData) => {
+      const uid = userData.user.uid;
+      const name = req.body.name;
+      const email = req.body.email;
+      const password = req.body.password;
+
+      // Save user name in Realtime Database
+      firebase
+        .database()
+        .ref("users/" + uid)
+        .set({
+          name: name,
+          email: email,
+          password: password,
+          uid: uid,
+        })
+        .then(() => {
+          // Send email verification
+          firebase
+            .auth()
+            .currentUser.sendEmailVerification()
+            .then(() => {
+              return res.status(201).json(userData);
+            })
+            .catch((error) => {
+              return res.status(500).json({ error: error.message });
+            });
+        })
+        .catch((error) => {
+          return res.status(500).json({ error: error.message });
+        });
     })
-    .catch(function (error) {
+    .catch((error) => {
       let errorCode = error.code;
       let errorMessage = error.message;
       if (errorCode == "auth/weak-password") {
@@ -26,7 +65,7 @@ exports.signup = (req, res) => {
 };
 
 // signin
-exports.signin = (req, res) => {
+exports.login = (req, res) => {
   if (!req.body.email || !req.body.password) {
     return res.status(422).json({
       email: "email is required",
@@ -36,10 +75,28 @@ exports.signin = (req, res) => {
   firebase
     .auth()
     .signInWithEmailAndPassword(req.body.email, req.body.password)
-    .then((user) => {
-      return res.status(200).json(user);
+    .then((userCredential) => {
+      const user = userCredential.user;
+      if (!user.emailVerified) {
+        return res.status(401).json({ error: "Email not verified. Please verify your email first." });
+      }
+
+      const uid = user.uid;
+      const newPassword = req.body.password;
+
+      // Update password in Realtime Database
+      firebase
+        .database()
+        .ref("users/" + uid)
+        .update({ password: newPassword })
+        .then(() => {
+          return res.status(200).json(user);
+        })
+        .catch((error) => {
+          return res.status(500).json({ error: error.message });
+        });
     })
-    .catch(function (error) {
+    .catch((error) => {
       let errorCode = error.code;
       let errorMessage = error.message;
       if (errorCode === "auth/wrong-password") {
@@ -50,23 +107,6 @@ exports.signin = (req, res) => {
     });
 };
 
-// verify email
-// this work after signup & signin
-exports.verifyEmail = (req, res) => {
-  firebase
-    .auth()
-    .currentUser.sendEmailVerification()
-    .then(function () {
-      return res.status(200).json({ status: "Email Verification Sent!" });
-    })
-    .catch(function (error) {
-      let errorCode = error.code;
-      let errorMessage = error.message;
-      if (errorCode === "auth/too-many-requests") {
-        return res.status(500).json({ error: errorMessage });
-      }
-    });
-};
 
 // forget password
 exports.forgetPassword = (req, res) => {
@@ -89,3 +129,4 @@ exports.forgetPassword = (req, res) => {
       }
     });
 };
+

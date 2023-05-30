@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 app.use("/api", authRoutes);
 
 // PORT
-const port = 3000;
+const port = 5000;
 
 // Starting a server
 app.listen(port, () => {
