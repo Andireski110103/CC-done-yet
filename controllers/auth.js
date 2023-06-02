@@ -1,4 +1,4 @@
-const firebase = require("./../config/firebase");
+const {firebase, database} = require("./../config/firebase");
 
 exports.register = (req, res) => {
   if (!req.body.email || !req.body.password || !req.body.name) {
@@ -130,3 +130,14 @@ exports.forgetPassword = (req, res) => {
     });
 };
 
+exports.getRegisteredUid = () => {
+  // Pastikan Anda sudah login sebelumnya
+const user = firebase.auth().currentUser;
+if (user) {
+  const uid = user.uid;
+  console.log('UID:', uid);
+} else {
+  console.log('Pengguna belum login.');
+}
+
+};

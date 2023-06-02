@@ -1,6 +1,6 @@
 const firebase = require("firebase/app");
 require("firebase/auth");
-require("firebase/firestore");
+require("firebase/storage");
 require('firebase/database');
 
 // Add Firebase SDK Snippet
@@ -15,6 +15,11 @@ const firebaseConfig = {
   measurementId: "G-GZSJH2K8WS"
 };
 
-firebase.initializeApp(firebaseConfig);
 
-module.exports = firebase;
+
+
+firebase.initializeApp(firebaseConfig);
+const storage = firebase.storage();
+const database = firebase.database();
+
+module.exports = {firebase, database, storage};

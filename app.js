@@ -9,12 +9,17 @@ app.get('/', (req, res) => {
 
 // Routes
 const authRoutes = require("./routes/auth");
+const uploadRoutes = require("./routes/imageProfil");
+const communityRoutes = require('./routes/communityRoute');
 
 // Middlewares
 app.use(bodyParser.json());
 
 // Routes
 app.use("/api", authRoutes);
+app.use("/api", uploadRoutes);
+app.use('/api/community', communityRoutes);
+
 
 // PORT
 
